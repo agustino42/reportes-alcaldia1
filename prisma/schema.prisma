@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      String   @default("CITIZEN") // CITIZEN, ADMIN, TECHNICIAN
+  password  String?  // For admins
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Incident {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String?
+  category    String   @default("OTRO") // VIALIDAD, AGUA, LUZ, ASEO, etc.
+  status      String   @default("RECIBIDO") // RECIBIDO, EN_REVISION, COMPLETADO
+  trackerCode String   @unique // Short code for citizen traceability
+  
+  citizenDni  String?  // Cedula
+  citizenName String?
+  citizenPhone String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Employee {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  position      String   // Position/Role in the organization
+  academicLevel String?  // Academic level: Bachiller, TSU, Universitario, Postgrado
+  department    String   // Department assignment
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  hireDate      DateTime @default(now())
+  salary        Float?    // Optional salary information
+  address       String?   // Employee address
+  avatar        String?   // Profile picture URL
+  supervisorId  String?  // Reference to supervisor
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
