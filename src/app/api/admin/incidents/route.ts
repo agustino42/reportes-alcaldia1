@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     
     if (status && status !== 'todos') {
       where.status = status;
@@ -30,9 +30,6 @@ export async function GET(req: Request) {
     const incidents = await prisma.incident.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        // Si necesitas incluir relaciones futuras, agrégalas aquí
-      }
     });
 
     // Transformar los datos para que coincidan con el formato esperado

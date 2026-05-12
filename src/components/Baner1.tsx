@@ -12,7 +12,7 @@ const Baner1 = () => {
   return (
     <section
       ref={ref}
-      className="mx-auto flex h-[350vh] w-screen flex-col items-center overflow-hidden bg-[#FAFDEE] px-4 text-[#1F3A4B]"
+      className="mx-auto flex h-[350vh] w-screen flex-col items-center overflow-hidden bg-gradient-to-br from-slate-100 via-sky-50 to-white px-4 text-[#1F3A4B]"
     >
       <div className="mt-42 relative flex w-fit flex-col items-center justify-center gap-5 text-center">
         <h1 className="font-jakarta-sans relative z-10 text-7xl font-medium tracking-[-0.08em] lg:text-9xl">

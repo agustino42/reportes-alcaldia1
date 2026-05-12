@@ -98,8 +98,7 @@ export default function Home() {
             <nav className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
               <Link href="/reportar" className="hover:text-blue-600 transition-colors">Reportar</Link>
               <Link href="/seguimiento" className="hover:text-blue-600 transition-colors">Seguimiento</Link>
-              <Link href="/gestion" className="hover:text-blue-600 transition-colors">Gestión de casos</Link>
-              <Link href="/admin" className="hover:text-blue-600 transition-colors">Panel interno</Link>
+              <Link href="/admin" className="hover:text-blue-600 transition-colors">Panel administrativo</Link>
             </nav>
             <Link href="/reportar" className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-colors">
               Reportar ahora
@@ -131,8 +130,7 @@ export default function Home() {
           <nav className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
             <Link href="/reportar" className="hover:text-blue-600 transition-colors">Reportar</Link>
             <Link href="/seguimiento" className="hover:text-blue-600 transition-colors">Seguimiento</Link>
-            <Link href="/gestion" className="hover:text-blue-600 transition-colors">Gestión de casos</Link>
-            <Link href="/admin" className="hover:text-blue-600 transition-colors">Panel interno</Link>
+            <Link href="/admin" className="hover:text-blue-600 transition-colors">Panel administrativo</Link>
           </nav>
           <Link href="/reportar" className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-colors">
             Reportar ahora
@@ -358,7 +356,9 @@ export default function Home() {
           </div>
         </section>
 
-   <Baner1 />
+        <div className="hidden md:block">
+          <Baner1 />
+        </div>
         <section className="mt-24 rounded-[2rem] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-8 py-14 text-white shadow-2xl shadow-slate-900/10">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-center">
             <div>
@@ -420,7 +420,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-4">
               <Link href="/reportar" className="hover:text-slate-900">Reportar</Link>
               <Link href="/seguimiento" className="hover:text-slate-900">Seguimiento</Link>
-              <Link href="/admin" className="hover:text-slate-900">Panel interno</Link>
+              <Link href="/admin" className="hover:text-slate-900">Panel administrativo</Link>
             </div>
           </div>
         </footer>

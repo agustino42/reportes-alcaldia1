@@ -48,14 +48,6 @@ export async function GET(req: Request) {
     const employees = await prisma.employee.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        supervisor: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
     });
 
     // Transformar datos para el frontend
@@ -71,7 +63,7 @@ export async function GET(req: Request) {
       salary: employee.salary || 0,
       address: employee.address || 'No proporcionada',
       avatar: employee.avatar || null,
-      supervisor: employee.supervisor || null,
+      supervisor: employee.supervisorId || null,
       createdAt: employee.createdAt.toISOString(),
       updatedAt: employee.updatedAt.toISOString()
     }));
@@ -94,7 +86,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phone, position, academicLevel, department, salary, address, supervisorId, status } = body;
+    const { name, email, phone, position, department, salary, address, supervisorId, status } = body;
 
     // Validar que el email no exista
     const existingEmployee = await prisma.employee.findUnique({
@@ -114,7 +106,6 @@ export async function POST(req: Request) {
         email,
         phone,
         position,
-        academicLevel,
         department,
         salary: salary ? parseFloat(salary) : null,
         address,

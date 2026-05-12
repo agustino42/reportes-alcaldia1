@@ -7,14 +7,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     
     const employee = await prisma.employee.findUnique({
       where: { id },
-      include: {
-        supervisor: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
     });
 
     if (!employee) {
@@ -34,7 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       salary: employee.salary || 0,
       address: employee.address || 'No proporcionada',
       avatar: employee.avatar || null,
-      supervisor: employee.supervisor || null,
+      supervisor: employee.supervisorId || null,
       createdAt: employee.createdAt.toISOString(),
       updatedAt: employee.updatedAt.toISOString()
     };

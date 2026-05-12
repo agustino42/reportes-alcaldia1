@@ -3,18 +3,17 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+    const isGestionRoute = request.nextUrl.pathname.startsWith('/gestion')
     const isLoginPage = request.nextUrl.pathname === '/login'
 
-    if (isAdminRoute) {
+    if (isAdminRoute || isGestionRoute) {
         const session = request.cookies.get('admin_session')
 
-        // Si no está autenticado, redirigir al login
         if (!session) {
             return NextResponse.redirect(new URL('/login', request.url))
         }
     }
 
-    // Si trata de entrar al login pero ya está autenticado, redirigir al dash
     if (isLoginPage) {
         const session = request.cookies.get('admin_session')
         if (session) {
@@ -26,5 +25,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/admin/:path*', '/login'],
+    matcher: ['/admin/:path*', '/gestion/:path*', '/login'],
 }
