@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, ShieldAlert, MapPin, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ShieldAlert, MapPin, FileText, Camera } from "lucide-react";
 import Link from "next/link";
 
 export default function ReportarPage() {
@@ -13,6 +13,8 @@ export default function ReportarPage() {
     const [descriptionInput, setDescriptionInput] = useState("");
     const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
     const [showDescriptionSuggestions, setShowDescriptionSuggestions] = useState(false);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
     const titulosRapidos = [
         "Bache en calle principal",
@@ -104,8 +106,25 @@ export default function ReportarPage() {
         e.preventDefault();
         setStatus("loading");
 
+        let imageUrl = "";
+        if (photoFile) {
+            const uploadFormData = new FormData();
+            uploadFormData.set("photo", photoFile);
+            try {
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: uploadFormData,
+                });
+                const result = await res.json();
+                if (result.url) imageUrl = result.url;
+            } catch {
+                // photo upload failed, continue without
+            }
+        }
+
         const formData = new FormData(e.currentTarget);
-        const data = Object.fromEntries(formData.entries());
+        const data: Record<string, unknown> = Object.fromEntries(formData.entries());
+        if (imageUrl) data.imageUrl = imageUrl;
 
         try {
             const res = await fetch("/api/incidents", {
@@ -342,7 +361,52 @@ export default function ReportarPage() {
                         </div>
 
                         <div className="space-y-6 pt-4 border-t">
-                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">2. Tus Datos (Opcional)</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">2. Evidencia Fotográfica (Opcional)</h3>
+                            <p className="text-sm text-slate-500 -mt-4">Adjunta una foto del problema para agilizar la atención.</p>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Foto del lugar</label>
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
+                                        <Camera className="w-5 h-5 text-slate-400" />
+                                        <span className="text-sm text-slate-600">{photoFile ? photoFile.name : "Seleccionar foto"}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0] || null;
+                                                setPhotoFile(file);
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+                                                    reader.readAsDataURL(file);
+                                                } else {
+                                                    setPhotoPreview(null);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                    {photoFile && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                                            className="text-sm text-red-500 hover:text-red-700"
+                                        >
+                                            Quitar
+                                        </button>
+                                    )}
+                                </div>
+                                {photoPreview && (
+                                    <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 max-w-xs">
+                                        <img src={photoPreview} alt="Preview" className="w-full h-32 object-cover" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">3. Tus Datos (Opcional)</h3>
                             <p className="text-sm text-slate-500 -mt-4">Si deseas que te contactemos, proporciona tus datos.</p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

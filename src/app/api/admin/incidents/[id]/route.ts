@@ -40,6 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       citizenDni: incident.citizenDni,
       citizenName: incident.citizenName,
       citizenPhone: incident.citizenPhone,
+      imageUrl: incident.imageUrl,
       createdAt: incident.createdAt,
       updatedAt: incident.updatedAt,
     };

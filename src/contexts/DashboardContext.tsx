@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { createClient } from '@/lib/supabase/client';
 
 interface DashboardStats {
   totalCases: number;
@@ -34,26 +34,17 @@ interface Notification {
 }
 
 interface DashboardContextType {
-  // Estado del dashboard
   activeView: string;
   setActiveView: (view: string) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
-  
-  // Datos en tiempo real
   stats: DashboardStats | null;
   recentCases: RecentCase[];
   notifications: Notification[];
-  
-  // Conexión WebSocket
   isConnected: boolean;
-  
-  // Acciones
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
-  
-  // Loading states
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
@@ -68,87 +59,95 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState<Socket | null>(null);
 
-  // Inicializar conexión WebSocket
+  // Supabase Realtime subscription
   useEffect(() => {
-    const newSocket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
-    
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-      console.log('Conectado al dashboard en tiempo real');
-    });
-    
-    newSocket.on('disconnect', () => {
-      setIsConnected(false);
-      console.log('Desconectado del dashboard');
-    });
-    
-    // Escuchar actualizaciones en tiempo real
-    newSocket.on('new_report', (data) => {
-      setStats(prev => prev ? {
-        ...prev,
-        totalCases: prev.totalCases + 1,
-        pendingCases: prev.pendingCases + 1
-      } : null);
-      
-      setRecentCases(prev => [data, ...prev.slice(0, 9)]);
-      
-      addNotification({
-        type: 'info',
-        title: 'Nuevo Reporte',
-        message: `Se ha recibido un nuevo reporte: ${data.title}`
-      });
-    });
-    
-    newSocket.on('case_status_update', (data) => {
-      setStats(prev => {
-        if (!prev) return null;
-        
-        const updatedStats = { ...prev };
-        
-        // Actualizar contadores según el cambio de estado
-        if (data.oldStatus === 'pending') {
-          updatedStats.pendingCases--;
-        } else if (data.oldStatus === 'active') {
-          updatedStats.activeCases--;
-        } else if (data.oldStatus === 'in_review') {
-          updatedStats.inReviewCases--;
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel('dashboard-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'Incident' },
+        (payload) => {
+          const newIncident = payload.new as Record<string, unknown>
+          setStats(prev => prev ? {
+            ...prev,
+            totalCases: prev.totalCases + 1,
+            pendingCases: prev.pendingCases + 1,
+          } : prev)
+
+          const newCase: RecentCase = {
+            id: newIncident.trackerCode as string,
+            title: newIncident.title as string,
+            location: (newIncident.location as string) || '',
+            status: newIncident.status as string,
+            priority: newIncident.status === 'RECIBIDO' ? 'Alta' : 'Media',
+            reportedDate: new Date(newIncident.createdAt as string).toISOString().split('T')[0],
+            reportedTime: new Date(newIncident.createdAt as string).toLocaleTimeString('es-VE', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          }
+
+          setRecentCases(prev => [newCase, ...prev.slice(0, 9)])
+
+          addNotification({
+            type: 'info',
+            title: 'Nuevo Reporte',
+            message: `Se ha recibido un nuevo reporte: ${newIncident.title}`,
+          })
         }
-        
-        if (data.newStatus === 'pending') {
-          updatedStats.pendingCases++;
-        } else if (data.newStatus === 'active') {
-          updatedStats.activeCases++;
-        } else if (data.newStatus === 'in_review') {
-          updatedStats.inReviewCases++;
-        } else if (data.newStatus === 'resolved') {
-          updatedStats.resolvedCases++;
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'Incident' },
+        (payload) => {
+          const updated = payload.new as Record<string, unknown>
+          const old = payload.old as Record<string, unknown>
+
+          if (updated.status !== old.status) {
+            setStats(prev => {
+              if (!prev) return prev
+              const next = { ...prev }
+
+              const statusMap: Record<string, keyof DashboardStats> = {
+                RECIBIDO: 'pendingCases',
+                EN_REVISION: 'inReviewCases',
+                COMPLETADO: 'resolvedCases',
+              }
+
+              const oldKey = statusMap[old.status as string]
+              const newKey = statusMap[updated.status as string]
+
+              if (oldKey) next[oldKey] = Math.max(0, (next[oldKey] as number) - 1)
+              if (newKey) next[newKey] = (next[newKey] as number) + 1
+
+              return next
+            })
+
+            setRecentCases(prev =>
+              prev.map(c =>
+                c.id === updated.trackerCode ? { ...c, status: updated.status as string } : c
+              )
+            )
+
+            addNotification({
+              type: 'success',
+              title: 'Caso Actualizado',
+              message: `El caso ${updated.trackerCode} cambió a ${updated.status}`,
+            })
+          }
         }
-        
-        return updatedStats;
-      });
-      
-      // Actualizar caso en la lista de recientes
-      setRecentCases(prev => prev.map(case_ => 
-        case_.id === data.caseId 
-          ? { ...case_, status: data.newStatus }
-          : case_
-      ));
-      
-      addNotification({
-        type: 'success',
-        title: 'Caso Actualizado',
-        message: `El caso ${data.caseId} ha cambiado a ${data.newStatus}`
-      });
-    });
-    
-    setSocket(newSocket);
-    
+      )
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED')
+      })
+
     return () => {
-      newSocket.close();
-    };
-  }, []);
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -158,14 +157,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           fetch('/api/admin/stats'),
           fetch('/api/admin/recent-cases')
         ]);
-        
+
         const statsData = await statsResponse.json();
         const casesData = await casesResponse.json();
-        
+
         if (statsData.success) {
           setStats(statsData.stats);
         }
-        
+
         if (casesData.success) {
           setRecentCases(casesData.cases);
         }
@@ -175,7 +174,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     };
-    
+
     fetchInitialData();
   }, []);
 
@@ -186,12 +185,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(),
       read: false
     };
-    
+
     setNotifications(prev => [newNotification, ...prev]);
   };
 
   const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => prev.map(notif => 
+    setNotifications(prev => prev.map(notif =>
       notif.id === id ? { ...notif, read: true } : notif
     ));
   };

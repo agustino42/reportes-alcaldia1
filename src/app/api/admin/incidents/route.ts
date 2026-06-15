@@ -35,6 +35,7 @@ export async function GET(req: Request) {
     // Transformar los datos para que coincidan con el formato esperado
     const transformedIncidents = incidents.map(incident => ({
       id: incident.trackerCode,
+      trackerCode: incident.trackerCode,
       uuid: incident.id,
       title: incident.title,
       description: incident.description,

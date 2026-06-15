@@ -3,18 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   name      String
-  role      String   @default("CITIZEN") // CITIZEN, ADMIN, TECHNICIAN
-  password  String?  // For admins
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      String     @default("CITIZEN") // CITIZEN, ADMIN, TECHNICIAN
+  password  String?    // Enabled for password login
+  avatar    String?    // Avatar URL or initials
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  incidents Incident[]
+  comments  Comment[]
+  votes     Vote[]
 }
 
 model Incident {
@@ -25,13 +30,54 @@ model Incident {
   category    String   @default("OTRO") // VIALIDAD, AGUA, LUZ, ASEO, etc.
   status      String   @default("RECIBIDO") // RECIBIDO, EN_REVISION, COMPLETADO
   trackerCode String   @unique // Short code for citizen traceability
-  
-  citizenDni  String?  // Cedula
-  citizenName String?
+
+  citizenDni   String?  // Cedula
+  citizenName  String?
   citizenPhone String?
+
+  imageUrl       String?  // Photo evidence (Supabase Storage)
+  assignedDepartment String?  // Department assigned to handle
+  assignedTo     String?  // Person/team assigned
+  notes          String?  // Internal notes
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  comments    Comment[]
+  votes       Vote[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  content    String
+  incidentId String
+  incident   Incident  @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName String?   // Display name (citizen name or admin name)
+
+  parentId   String?
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Vote {
+  id         String   @id @default(uuid())
+  value      Int      // 1 (upvote), -1 (downvote)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, incidentId])
 }
 
 model Employee {
@@ -51,3 +97,4 @@ model Employee {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+

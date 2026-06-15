@@ -34,7 +34,7 @@ export default function LoginPage() {
                             name="username"
                             required
                             className="text-black w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                            placeholder="admin"
+                            placeholder="Email o admin"
                         />
                     </div>
                     <div>

@@ -18,6 +18,7 @@ import {
   X,
   LogOut,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 
@@ -27,6 +28,7 @@ const sidebarItems = [
   { id: "employees", label: "Funcionarios", icon: Users, href: "/admin/funcionarios" },
   { id: "assignment", label: "Asignación", icon: BarChart3, href: "/admin/asignacion" },
   { id: "reports", label: "Reportes", icon: ClipboardList, href: "/admin/reportes" },
+  { id: "roles", label: "Roles", icon: Shield, href: "/admin/setup" },
   { id: "settings", label: "Configuración", icon: Settings, href: "/admin/configuracion" },
 ];
 
@@ -36,6 +38,7 @@ function getActiveView(pathname: string): string {
   if (pathname.startsWith("/admin/funcionarios")) return "employees";
   if (pathname.startsWith("/admin/asignacion")) return "assignment";
   if (pathname.startsWith("/admin/reportes")) return "reports";
+  if (pathname.startsWith("/admin/setup")) return "roles";
   if (pathname.startsWith("/admin/configuracion")) return "settings";
   return "overview";
 }

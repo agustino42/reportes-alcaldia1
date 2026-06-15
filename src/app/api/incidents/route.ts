@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title, description, category, location, citizenDni, citizenName, citizenPhone } = body;
+        const { title, description, category, location, citizenDni, citizenName, citizenPhone, imageUrl } = body;
 
         // Generar un código único de seguimiento de 6 caracteres alfanuméricos
         const trackerCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
                 trackerCode,
                 citizenDni,
                 citizenName,
-                citizenPhone
+                citizenPhone,
+                imageUrl: imageUrl || null,
             }
         });
 
