@@ -19,36 +19,19 @@ const fadeUp = {
   visible: { opacity: 1, y: 0 },
 };
 
-const latestReports = [
-  {
-    title: "Bache en calle principal",
-    location: "Barrio San Juan",
-    status: "En revisión",
-    tag: "Infraestructura",
-    description: "Un hundimiento en la avenida principal afecta el tránsito y requiere intervención urgente.",
-  },
-  {
-    title: "Luminaria apagada en sector",
-    location: "Sector La Paz",
-    status: "Asignado",
-    tag: "Seguridad",
-    description: "Varias columnas de luz permanecen apagadas durante la noche, generando zonas oscuras.",
-  },
-  {
-    title: "Acumulación de basura",
-    location: "El Carmen",
-    status: "En proceso",
-    tag: "Limpieza urbana",
-    description: "Residuos se acumulan en la esquina de una calle escolar, generando mal olor y riesgo sanitario.",
-  },
-  {
-    title: "Fuga de agua en parque",
-    location: "Parque Bolívar",
-    status: "Notificado",
-    tag: "Servicios",
-    description: "Filtración de tubería en el parque central, se necesita reparación para evitar daños mayores.",
-  },
-];
+interface PublishedIncident {
+  id: string;
+  title: string;
+  description: string;
+  location: string | null;
+  category: string;
+  status: string;
+  trackerCode: string;
+  imageUrl: string | null;
+  citizenName: string | null;
+  publishedAt: string;
+  createdAt: string;
+}
 
 const faqItems = [
   {
@@ -71,9 +54,28 @@ const faqItems = [
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [publishedIncidents, setPublishedIncidents] = useState<PublishedIncident[]>([]);
+  const [loadingIncidents, setLoadingIncidents] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    async function fetchPublished() {
+      try {
+        const res = await fetch("/api/public/incidents");
+        const data = await res.json();
+        if (data.success) {
+          setPublishedIncidents(data.incidents);
+        }
+      } catch {
+        // silently fail, show empty
+      } finally {
+        setLoadingIncidents(false);
+      }
+    }
+    fetchPublished();
   }, []);
 
   if (!mounted) {
@@ -242,24 +244,35 @@ export default function Home() {
                   </Link>
                 </div>
 
-                {latestReports.map((report) => (
-                  <div key={report.title} className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
-                    <div className="flex items-center justify-between gap-3 mb-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{report.title}</p>
-                        <p className="text-sm text-slate-500">{report.location}</p>
-                      </div>
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                        {report.tag}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-600 leading-6 mb-4">{report.description}</p>
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                      <Clock3 className="w-3.5 h-3.5 mr-1" />
-                      {report.status}
-                    </span>
+                {loadingIncidents ? (
+                  <div className="text-center py-8 text-sm text-slate-400">Cargando publicaciones...</div>
+                ) : publishedIncidents.length === 0 ? (
+                  <div className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm text-center text-sm text-slate-400">
+                    No hay publicaciones destacadas aún
                   </div>
-                ))}
+                ) : (
+                  publishedIncidents.map((incident) => (
+                    <div key={incident.id} className="rounded-3xl bg-slate-50 p-5 border border-slate-200 shadow-sm">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{incident.title}</p>
+                          <p className="text-sm text-slate-500">{incident.location || "Sin ubicación"}</p>
+                        </div>
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          {incident.category}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 leading-6 mb-4">{incident.description}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                          <Clock3 className="w-3.5 h-3.5 mr-1" />
+                          {incident.status === "RECIBIDO" ? "Recibido" : incident.status === "EN_REVISION" ? "En revisión" : incident.status === "COMPLETADO" ? "Completado" : incident.status}
+                        </span>
+                        <span className="text-xs text-slate-400">· {incident.citizenName || "Anónimo"}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </motion.div>
@@ -312,47 +325,40 @@ export default function Home() {
         <section className="mt-24">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={fadeUp} transition={{ duration: 0.7 }}>
             <div className="mx-auto mb-10 max-w-3xl text-center">
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Casos recientes</p>
-              <h3 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">Historias reales de la comunidad</h3>
+              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Casos publicados</p>
+              <h3 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">Reportes destacados de la comunidad</h3>
             </div>
           </motion.div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            {[
-              {
-                title: "Camino inseguro",
-                text: "Reportes de baches y aceras rotas que afectan a vecinos y ciclistas.",
-                label: "Salud vial",
-                color: "bg-amber-100 text-amber-700",
-              },
-              {
-                title: "Luz pública apagada",
-                text: "Vecinos del sector La Paz reportaron iluminación caída en vías principales.",
-                label: "Seguridad",
-                color: "bg-indigo-100 text-indigo-700",
-              },
-              {
-                title: "Recolección pendiente",
-                text: "Basura acumulada en la esquina de la parroquia; el equipo de limpieza está en alerta.",
-                label: "Limpieza urbana",
-                color: "bg-emerald-100 text-emerald-700",
-              },
-            ].map((caseItem) => (
-              <motion.div
-                key={caseItem.title}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.6 }}
-                className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/50 hover:-translate-y-1 hover:shadow-xl transition-all"
-              >
-                <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${caseItem.color}`}>
-                  {caseItem.label}
-                </span>
-                <h4 className="mt-6 text-xl font-semibold text-slate-900 mb-3">{caseItem.title}</h4>
-                <p className="text-slate-500 leading-7">{caseItem.text}</p>
-              </motion.div>
-            ))}
+            {publishedIncidents.slice(0, 3).map((incident, i) => {
+              const categoryColors: Record<string, string> = {
+                VIALIDAD: "bg-amber-100 text-amber-700",
+                AGUA: "bg-blue-100 text-blue-700",
+                LUZ: "bg-indigo-100 text-indigo-700",
+                ASEO: "bg-emerald-100 text-emerald-700",
+                SEGURIDAD: "bg-red-100 text-red-700",
+                OTRO: "bg-slate-100 text-slate-700",
+              };
+              const color = categoryColors[incident.category] || categoryColors.OTRO;
+              return (
+                <motion.div
+                  key={incident.id}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, delay: i * 0.1 }}
+                  className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/50 hover:-translate-y-1 hover:shadow-xl transition-all"
+                >
+                  <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${color}`}>
+                    {incident.category}
+                  </span>
+                  <h4 className="mt-6 text-xl font-semibold text-slate-900 mb-3">{incident.title}</h4>
+                  <p className="text-slate-500 leading-7 line-clamp-3">{incident.description}</p>
+                  <p className="mt-4 text-xs text-slate-400">{incident.location || "Sin ubicación"}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 

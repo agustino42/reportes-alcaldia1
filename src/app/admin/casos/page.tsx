@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { PublishToggle } from "@/app/admin/PublishToggle";
 
 const VALID_STATUSES = ["RECIBIDO", "EN_REVISION", "COMPLETADO"] as const;
 type ValidStatus = (typeof VALID_STATUSES)[number];
@@ -27,6 +28,7 @@ const STATUS_LABELS: Record<ValidStatus, string> = {
 
 interface Incident {
   id: string;
+  uuid: string;
   title: string;
   description: string;
   location: string | null;
@@ -37,6 +39,7 @@ interface Incident {
   citizenDni: string | null;
   createdAt: string;
   updatedAt: string;
+  publishedAt: string | null;
 }
 
 const fadeUp = {
@@ -268,6 +271,7 @@ export default function CasosPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Prioridad</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Fecha</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Publicado</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -309,6 +313,11 @@ export default function CasosPage() {
                       <div className="flex items-center text-sm text-slate-500">
                         <Calendar className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
                         {new Date(caseItem.createdAt).toLocaleDateString("es-VE", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center">
+                        <PublishToggle id={caseItem.uuid} publishedAt={caseItem.publishedAt} />
                       </div>
                     </td>
                     <td className="px-6 py-4">

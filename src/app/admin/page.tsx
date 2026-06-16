@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { AlertCircle, RefreshCw, CheckCircle2, Layers, MapPin, User, Calendar } from "lucide-react";
 import { StatusForm } from "./StatusForm";
+import { PublishToggle } from "./PublishToggle";
 
 export default async function AdminDashboard() {
   const incidents = await prisma.incident.findMany({
@@ -76,6 +77,7 @@ export default async function AdminDashboard() {
                 <th className="px-6 py-4 hidden md:table-cell">Fecha</th>
                 <th className="px-6 py-4 hidden sm:table-cell">Ciudadano</th>
                 <th className="px-6 py-4 text-center">Estatus</th>
+                <th className="px-6 py-4 text-center">Publicado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -127,6 +129,9 @@ export default async function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <StatusForm id={incident.id} currentStatus={incident.status} />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <PublishToggle id={incident.id} publishedAt={incident.publishedAt?.toISOString() || null} />
                     </td>
                   </tr>
                 ))

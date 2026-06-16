@@ -106,6 +106,7 @@ export default function ReportarPage() {
         e.preventDefault();
         setStatus("loading");
 
+        const form = e.currentTarget;
         let imageUrl = "";
         if (photoFile) {
             const uploadFormData = new FormData();
@@ -122,7 +123,7 @@ export default function ReportarPage() {
             }
         }
 
-        const formData = new FormData(e.currentTarget);
+        const formData = new FormData(form);
         const data: Record<string, unknown> = Object.fromEntries(formData.entries());
         if (imageUrl) data.imageUrl = imageUrl;
 

@@ -54,6 +54,7 @@ export async function GET(req: Request) {
       assignedTo: 'No asignado',
       assignedDepartment: 'Por definir',
       estimatedResolution: getEstimatedResolution(incident.status),
+      publishedAt: incident.publishedAt?.toISOString() || null,
       images: [], // No hay campo images en el schema actual
       tags: getCategoryTags(incident.category),
       coordinates: null, // No hay campo coordinates en el schema actual

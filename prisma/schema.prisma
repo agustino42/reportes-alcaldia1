@@ -39,6 +39,7 @@ model Incident {
   assignedDepartment String?  // Department assigned to handle
   assignedTo     String?  // Person/team assigned
   notes          String?  // Internal notes
+  publishedAt    DateTime? // When admin published to frontend (null = not shown)
 
   userId      String?
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
